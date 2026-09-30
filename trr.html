@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Graph Theory Visualizer</title>
+<style>
+:root{--bg:#0b1220;--p:#111a2e;--l:#25344f;--t:#dbe6f5;--m:#8ba0bf;--a:#38bdf8;--w:#f59e0b;--ok:#34d399;--bad:#f87171}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px/1.6 system-ui,"Segoe UI",sans-serif}
+h1,h2,h3{font-family:Georgia,serif;margin:.3em 0}h1{font-size:clamp(2.2rem,6vw,4rem);line-height:1.05}
+nav{position:sticky;top:0;z-index:9;display:flex;gap:4px;align-items:center;flex-wrap:wrap;background:#0b1220ee;border-bottom:1px solid var(--l);padding:8px 16px}
+nav b{margin-right:auto;font-family:Georgia,serif;color:var(--a);font-size:1.1rem}
+button,select,input,textarea{font:inherit;color:var(--t);background:#16223a;border:1px solid var(--l);border-radius:6px;padding:6px 11px;transition:.25s}
+button{cursor:pointer}button:hover,button.on{background:#1d3557;border-color:var(--a)}button.pri{background:var(--a);color:#04121f;border-color:var(--a);font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.page{display:none;max-width:1400px;margin:auto;padding:18px}.page.on{display:block}
+.card{background:var(--p);border:1px solid var(--l);border-radius:10px;padding:14px;margin-bottom:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.m{color:var(--m)}
+.hero{position:relative;overflow:hidden;padding:70px 20px 50px}.hero .mini{position:absolute;right:0;top:0;width:60%;height:100%;opacity:.35;pointer-events:none}
+.hero>*:not(.mini){position:relative}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+svg#cv{width:100%;height:auto;max-height:56vh;background:#0d1626;border-radius:8px;touch-action:none;cursor:crosshair}
+.e{fill:none;stroke:#5b6f92;stroke-width:2.5;transition:.3s}.hit{fill:none;stroke:transparent;stroke-width:16}
+.e.current,.e.active,.e.hl{stroke:var(--a);stroke-width:5}.e.used{stroke:#7dd3fc99;stroke-width:3.5}.e.completed{stroke:#34d39966;stroke-width:3}
+.e.path,.e.visited{stroke:var(--ok);stroke-width:5}.e.warning{stroke:var(--w);stroke-width:4;stroke-dasharray:7 5}
+.v circle{fill:#182741;stroke:#7b8fb3;stroke-width:2.5;transition:.3s;cursor:pointer}.v text{fill:var(--t);text-anchor:middle;pointer-events:none;font-weight:600}
+.v.selected circle{stroke:var(--a);stroke-dasharray:4 3}.v.current circle{fill:var(--a);stroke:#fff}.v.current text{fill:#04121f}
+.v.visited circle{fill:#1d3f5e;stroke:var(--ok);stroke-width:4}.v.path circle{fill:var(--ok);stroke:#fff}.v.path text{fill:#04121f}
+.v.warning circle{fill:var(--w);stroke-dasharray:5 3}.v.warning text{fill:#1a1000}.v.hl circle{stroke:var(--a);stroke-width:4}
+.st{font-size:12px!important;fill:var(--m)!important}.lab{fill:var(--w)!important;font-size:14px}.w{fill:var(--w);font-size:14px;text-anchor:middle;paint-order:stroke;stroke:#0d1626;stroke-width:4px;font-weight:600}
+.badge{display:inline-block;padding:1px 9px;border-radius:99px;font-size:.85em;background:#1d3557}.yes{background:#0f3d2e;color:var(--ok)}.no{background:#4a1f1f;color:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:.88em}td,th{border:1px solid var(--l);padding:3px 8px;text-align:center}th{background:#16223a}
+.scr{overflow:auto;max-height:260px}.steps div{padding:4px 8px;border-left:3px solid var(--l);cursor:pointer}.steps div.c{border-color:var(--a);background:#16223a}
+.prog{height:6px;background:#16223a;border-radius:4px;margin:8px 0}.prog i{display:block;height:100%;background:var(--a);border-radius:4px;transition:.3s}
+.expl{border-left:4px solid var(--a);background:#0d1626;padding:10px 14px;border-radius:6px;min-height:52px}
+.mini{width:100%;max-width:260px;height:auto}.mini .me{fill:none;stroke:#7b8fb3;stroke-width:2;stroke-dasharray:100;animation:dr .5s both}.mini .me.hl{stroke:var(--a);stroke-width:4}
+.mini circle{fill:#182741;stroke:var(--a);stroke-width:2}.mini .hl circle{fill:var(--a)}.mini text{fill:var(--t);text-anchor:middle;font-size:12px;pointer-events:none}.mini .hl text{fill:#04121f}
+@keyframes dr{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+.opt{display:block;width:100%;text-align:left;margin:4px 0}.opt.ok{background:#0f3d2e;border-color:var(--ok)}.opt.bad{background:#4a1f1f;border-color:var(--bad)}
+body.pres .tb,body.pres nav input{display:none}body.pres{font-size:19px}body.pres svg#cv{max-height:82vh}body.pres .expl{font-size:1.25em}
+.mono{font-family:ui-monospace,Consolas,monospace}footer{text-align:center;color:var(--m);padding:30px;border-top:1px solid var(--l)}
+.cd div{padding:0 10px;border-left:3px solid transparent;white-space:pre;font-size:.85em;line-height:1.7}.cd div.cl{background:#1d3557;border-left-color:var(--a);color:#fff}.cd i{color:var(--m);font-style:normal;display:inline-block;width:2em;user-select:none}
+.grid2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px;align-items:start}.side{position:sticky;top:58px;max-height:calc(100vh - 66px);overflow:auto}.side .card{margin-bottom:10px}
+.tri{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start}
+.scr{position:relative}.scr tr:first-child th{position:sticky;top:0;z-index:1}#tbl{max-height:210px}#stl{max-height:140px}td.chg{background:#7c4a03;color:#fde68a;font-weight:700}
+@media(max-width:1000px){.grid2{grid-template-columns:1fr}.side{position:static;max-height:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<nav aria-label="Điều hướng"><b>Graph Theory Visualizer</b>
+<button data-p="home" class="on">Home</button><button data-p="theory">Lý thuyết</button><button data-p="viz">Visualizer</button><button data-p="quiz">Quiz</button><button data-p="about">About</button>
+<input id="q" placeholder="Search graph theory..." aria-label="Tìm kiếm" style="width:170px"></nav>
+
+<section class="page on" id="home"><div class="card hero"><div id="heroG"></div>
+<h1>GRAPH THEORY<br>VISUALIZER</h1><p style="font-size:1.3em">Khám phá – Trực quan hóa – Mô phỏng</p>
+<p class="m">Website hỗ trợ học tập Lý thuyết đồ thị thông qua hình ảnh trực quan và animation thuật toán.</p>
+<div class="row"><button class="pri" data-p="theory">Khám phá lý thuyết</button><button data-p="viz">Graph Visualizer</button></div></div>
+<div class="cards" id="homeCards"></div></section>
+
+<section class="page" id="theory"><div id="tc"></div></section>
+
+<section class="page" id="viz">
+<div class="card tb"><div class="row" id="modes"></div><div class="row" style="margin-top:8px">
+<label><input type="checkbox" id="dir"> Có hướng</label><label><input type="checkbox" id="wt"> Có trọng số</label>
+<select id="ex" aria-label="Đồ thị mẫu"></select><button id="loadEx">Load Example</button><button id="rnd">Random Graph</button><button id="clr">Clear</button></div></div>
+<div class="grid2"><div>
+<div class="card"><svg id="cv" viewBox="0 0 800 480" role="img" aria-label="Vùng vẽ đồ thị"></svg>
+<div class="m" style="font-size:.85em">Trạng thái (màu + ký hiệu): ▶ đang xét · ✓ đã xét · ● thuộc đường đi · ✗ quay lui. Nhấp đúp vào đỉnh để đổi tên, vào cạnh để đổi trọng số.</div></div>
+<div class="card"><div class="row tb" id="algos"></div><div class="row" style="margin:8px 0">
+<label>Start <select id="s"></select></label><label>Đích <select id="t"></select></label><button class="pri" id="run">Chạy thuật toán</button>
+<button id="pl" aria-label="Play">▶ Play</button><button id="pa" aria-label="Pause">⏸ Pause</button><button id="pv" aria-label="Bước trước">⏮ Prev</button><button id="nx" aria-label="Bước sau">⏭ Next</button><button id="rs" aria-label="Reset">↺ Reset</button>
+<select id="sp" aria-label="Tốc độ"><option value="1800">Slow</option><option value="1000" selected>Normal</option><option value="350">Fast</option></select>
+<label><input type="checkbox" id="lm" checked> Learning mode</label><button id="pm">Presentation mode</button></div>
+<div class="prog"><i id="pg" style="width:0"></i></div><div class="m" id="sc">Bước 0/0</div><div class="expl" id="ex2">Chọn thuật toán rồi nhấn “Chạy thuật toán”.</div></div>
+</div><div class="side">
+<div class="card"><h3>Code thuật toán <span class="m" id="cn" style="font-size:.6em"></span></h3><div class="scr mono cd" id="code" style="max-height:230px"></div></div>
+<div class="card"><h3>Bảng trạng thái</h3><div class="scr" id="tbl"></div></div>
+<div class="card"><h3>Algorithm steps</h3><div class="scr steps" id="stl"></div></div></div></div>
+<div class="tri">
+<div class="card"><h3>Graph analysis</h3><div id="an"></div><button class="pri" id="analyze">Analyze Graph</button><div id="alg" style="margin-top:10px"></div></div>
+<div class="card"><h3>Biểu diễn (dữ liệu thật)</h3><div id="rep"></div></div>
+<div class="card tb"><h3>Nhập đồ thị</h3><label>Đỉnh (A,B,C)<input id="fv" style="width:100%" value="A,B,C,D"></label>
+<label>Cạnh (mỗi dòng u-v hoặc u-v-w)<textarea id="fe" rows="5" style="width:100%">A-B-4
+A-C-2
+C-B-1
+B-D-5
+C-D-8</textarea></label><label><input type="checkbox" id="simple"> Đồ thị đơn (cấm cạnh trùng/khuyên)</label><br><button class="pri" id="mk">Create Graph</button><div id="err" style="color:var(--bad)"></div></div></div>
+</section>
+
+<section class="page" id="quiz"><div class="card"><h2>Mini quiz <span class="badge" id="score">Score: 0/0</span></h2><div id="qs"></div></div></section>
+<section class="page" id="about"><div class="card"><h2>About</h2><p>Graph Theory Visualizer – công cụ học tập môn Toán rời rạc (Lý thuyết đồ thị). Mọi kết quả được tính bằng thuật toán thật từ đồ thị hiện tại: BFS, Hierholzer, Backtracking, Dijkstra, Bellman-Ford, Johnson. Phím ← → để lùi/tiến bước trong Visualizer.</p></div></section>
+<footer><b>GRAPH THEORY VISUALIZER</b><br>Interactive Learning Tool for Discrete Mathematics<br>Môn: Toán rời rạc · Chủ đề: Lý thuyết đồ thị</footer>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+// ===== MÔ HÌNH ĐỒ THỊ: G.V (đỉnh), G.E (cạnh), G.dir, G.wt =====
+let G={V:[],E:[],dir:false,wt:false};
+// Danh sách kề: A[u] = [{to, e}] (e = chỉ số cạnh)
+function adj(){const A={};G.V.forEach(v=>A[v.id]=[]);G.E.forEach((e,i)=>{A[e.u].push({to:e.v,e:i});if(!G.dir&&e.u!==e.v)A[e.v].push({to:e.u,e:i});});return A}
+const und=()=>{const A={};G.V.forEach(v=>A[v.id]=[]);G.E.forEach((e,i)=>{A[e.u].push({to:e.v,e:i});if(e.u!==e.v)A[e.v].push({to:e.u,e:i});});return A};
+const revA=()=>{const A={};G.V.forEach(v=>A[v.id]=[]);G.E.forEach((e,i)=>A[e.v].push({to:e.u,e:i}));return A};
+// Tìm bậc của từng đỉnh (khuyên vô hướng tính 2)
+function degs(){const d={};G.V.forEach(v=>d[v.id]={i:0,o:0,t:0});G.E.forEach(e=>{d[e.u].o++;d[e.v].i++;});G.V.forEach(v=>{const x=d[v.id];x.t=G.dir?x.i+x.o:x.o+x.i;});return d}
+// Kiểm tra liên thông bằng BFS
+function bfsSet(s,A){const S=new Set([s]),q=[s];while(q.length){const u=q.shift();A[u].forEach(x=>{if(!S.has(x.to)){S.add(x.to);q.push(x.to)}})}return S}
+function conn(){const n=G.V.length;if(!n)return{weak:true,strong:true};const s=G.V[0].id,weak=bfsSet(s,und()).size===n;
+ return{weak,strong:G.dir?(bfsSet(s,adj()).size===n&&bfsSet(s,revA()).size===n):weak}}
+const isSimple=()=>{const s=new Set();for(const e of G.E){if(e.u===e.v)return false;const k=G.dir?e.u+">"+e.v:[e.u,e.v].sort().join("|");if(s.has(k))return false;s.add(k)}return true};
+const W=e=>G.wt?e.w:1, fmt=x=>x===Infinity?"∞":x;
+// ===== ĐIỀU KIỆN EULER =====
+function eulerInfo(){const d=degs();if(!G.E.length)return{circ:false,path:false,why:"Đồ thị chưa có cạnh."};
+ const ids=G.V.filter(v=>d[v.id].t>0).map(v=>v.id),S=bfsSet(ids[0],und());
+ if(ids.some(x=>!S.has(x)))return{circ:false,path:false,why:"Các đỉnh có cạnh không cùng một thành phần liên thông."};
+ if(!G.dir){const odd=ids.filter(x=>d[x].t%2);return{circ:!odd.length,path:odd.length<=2,start:odd.length?odd[0]:ids[0],why:odd.length?`Có ${odd.length} đỉnh bậc lẻ: ${odd.join(", ")}.`:"Liên thông và mọi đỉnh bậc chẵn."}}
+ const pl=ids.filter(x=>d[x].o-d[x].i===1),mi=ids.filter(x=>d[x].i-d[x].o===1),bad=ids.some(x=>Math.abs(d[x].o-d[x].i)>1);
+ const circ=ids.every(x=>d[x].o===d[x].i),path=circ||(!bad&&pl.length===1&&mi.length===1);
+ return{circ,path,start:circ?ids[0]:pl[0],why:circ?"Mọi đỉnh có bán bậc vào = bán bậc ra.":path?"Có đúng 1 đỉnh out-in=1 và 1 đỉnh in-out=1.":"Bán bậc vào/ra không thỏa điều kiện."}}
+// ===== TẠO BƯỚC (snapshot) CHO ANIMATION =====
+// mỗi bước: {m: mô tả ngắn, l: giải thích học tập, vs: trạng thái đỉnh, es: trạng thái cạnh, lab: nhãn đỉnh, row: dòng bảng}
+const K=o=>JSON.parse(JSON.stringify(o));
+// Duyệt BFS kiểm tra liên thông
+function connSteps(s){const A=adj(),st=[],vis=new Set([s]),q=[s],es={},order=[s];let n=0;
+ const P=(m,l,cur)=>{const vs={};vis.forEach(x=>vs[x]="visited");if(cur)vs[cur]="current";st.push({m,l,vs,es:K(es),row:[++n,cur||"-",q.join(",")||"-",order.join("→")]})};
+ P(`Bắt đầu tại ${s}`,`Đưa ${s} vào hàng đợi và đánh dấu đã thăm.`,s);
+ while(q.length){const u=q.shift();for(const x of A[u]){es[x.e]="active";if(!vis.has(x.to)){vis.add(x.to);q.push(x.to);order.push(x.to);P(`Từ ${u} đi tới ${x.to}`,`${x.to} chưa thăm → thăm ${x.to}, đưa vào hàng đợi.`,x.to);es[x.e]="visited"}else{P(`Cạnh ${u}-${x.to}: đã thăm`,`${x.to} đã thăm nên bỏ qua.`,u);es[x.e]="completed"}}}
+ const c=conn(),ok=vis.size===G.V.length;
+ P("Kết thúc BFS",`Đã thăm ${vis.size}/${G.V.length} đỉnh.`,null);
+ let r=`Visited: ${order.join(" → ")}<br>Visited vertices: ${vis.size}/${G.V.length}<br>`;
+ r+=G.dir?`Strongly connected: ${c.strong?"YES":"NO"}<br>Weakly connected: ${c.weak?"YES":"NO"}`:`Result: <b>${ok?"CONNECTED":"NOT CONNECTED"}</b>`;
+ if(!ok&&!G.dir)r+=`<br>Lý do: không tới được ${G.V.filter(v=>!vis.has(v.id)).map(v=>v.id).join(", ")} từ ${s}.`;
+ return{steps:st,head:["STEP","CURRENT","QUEUE","VISITED"],res:r,cx:"BFS: O(V + E)"}}
+// Tìm chu trình/đường đi Euler bằng thuật toán Hierholzer
+function eulerRun(){const I=eulerInfo();if(!I.path)return{res:`Euler Circuit: <span class=badge>NO</span><br>Euler Path: <span class=badge>NO</span><br>${I.why}`,steps:[],head:[],cx:"Hierholzer: O(E)"};
+ const A=adj(),used=new Set(),ptr={},stack=[I.start],es=[],circ=[],pe=[],est={},st=[];G.V.forEach(v=>ptr[v.id]=0);let n=0;
+ const P=(m,l,c,ed)=>{const vs={};vs[c]="current";st.push({m,l,vs,es:K(est),row:[++n,c,ed,used.size]})};
+ P(`Xuất phát tại ${I.start}`,I.circ?"Có chu trình Euler: xuất phát từ một đỉnh bất kỳ có cạnh.":"Có đường đi Euler: xuất phát từ đỉnh bậc lẻ.",I.start,"-");
+ while(stack.length){const v=stack[stack.length-1];while(ptr[v]<A[v].length&&used.has(A[v][ptr[v]].e))ptr[v]++;
+  if(ptr[v]<A[v].length){const x=A[v][ptr[v]];used.add(x.e);for(const k in est)if(est[k]==="current")est[k]="used";est[x.e]="current";stack.push(x.to);es.push(x.e);P(`Đi cạnh ${v}→${x.to}`,`Chọn cạnh chưa dùng ${v}-${x.to}, đánh dấu đã đi.`,x.to,v+"-"+x.to)}
+  else{stack.pop();circ.push(v);const e=es.pop();if(e!==undefined){pe.push(e);est[e]="completed"}P(`Lùi: thêm ${v} vào kết quả`,`Đỉnh ${v} hết cạnh chưa đi → đưa vào kết quả (Hierholzer).`,v,"(lùi)")}}
+ circ.reverse();pe.reverse();const p=circ.join(" → "),vs={};circ.forEach(x=>vs[x]="path");const e2={};pe.forEach(e=>e2[e]="path");
+ st.push({m:"Hoàn tất",l:"Đảo ngược danh sách ta được hành trình Euler.",vs,es:e2,row:[++n,circ[circ.length-1],"-",used.size]});
+ return{steps:st,head:["STEP","CURRENT","EDGE","USED EDGES"],res:`Euler Circuit: <span class="badge ${I.circ?"yes":"no"}">${I.circ?"YES":"NO"}</span><br>Euler Path: <span class="badge yes">YES</span><br>${I.circ?"Chu trình":"Đường đi"}: <b>${p}</b>`,cx:"Hierholzer: O(E)"}}
+// Tìm chu trình Hamilton bằng Backtracking (rec=false: chạy im lặng để phân tích)
+function hamRun(start,rec){const A=adj(),n=G.V.length,S=[],CAP=rec?4000:200000,path=[start],inP=new Set([start]);let cyc=null,pth=null,cnt=0,capped=false,k=0;
+ const has=(a,b)=>A[a].find(x=>x.to===b),ep=(pp)=>{const o={};for(let i=0;i<pp.length-1;i++){const x=has(pp[i],pp[i+1]);if(x)o[x.e]="path"}return o};
+ const P=(act,m,l,extra,es2)=>{if(!rec)return;const vs={};path.forEach(x=>vs[x]="path");vs[path[path.length-1]]="current";if(extra)vs[extra]="warning";S.push({m,l,vs,es:es2||ep(path),row:[++k,path[path.length-1],path.join("-"),act]})};
+ P("Choose",`Bắt đầu tại ${start}`,"Đặt đỉnh xuất phát vào đường đi.");
+ (function go(){if(cyc||capped)return;const last=path[path.length-1];
+  if(path.length===n){if(!pth)pth=[...path];if(n>=3&&has(last,start)){cyc=[...path,start];P("Complete",`Quay về ${start}: chu trình Hamilton!`,"Đã đi qua mọi đỉnh và có cạnh về đỉnh xuất phát.",null,ep(cyc));return}
+   P("BACKTRACK","Đủ đỉnh nhưng không có cạnh về đỉnh đầu","Đây chỉ là đường đi Hamilton, chưa là chu trình → quay lui.",last,ep(path));return}
+  const tried=new Set();for(const x of A[last]){if(inP.has(x.to)||tried.has(x.to))continue;tried.add(x.to);if(++cnt>CAP){capped=true;return}
+   path.push(x.to);inP.add(x.to);P("Choose",`Chọn ${x.to}`,`Thử đi tiếp tới ${x.to} (chưa thăm).`);go();if(cyc||capped)return;
+   P("BACKTRACK",`Quay lui khỏi ${x.to}`,`Nhánh qua ${x.to} không dẫn tới lời giải → bỏ ${x.to}.`,x.to);path.pop();inP.delete(x.to)}
+  if(!tried.size&&path.length<n)P("BACKTRACK",`Ngõ cụt tại ${last}`,"Không còn đỉnh kề chưa thăm → quay lui.",last)})();
+ let r;if(cyc)r=`Hamilton Cycle: <span class="badge yes">FOUND</span><br><b>${cyc.join(" → ")}</b>`;
+ else if(capped)r=`<span class="badge">CHƯA KẾT LUẬN</span> Dừng vì quá nhiều bước (O(V!)).`;
+ else r=`Hamilton Cycle: <span class="badge no">NOT FOUND</span><br>Thuật toán đã thử các khả năng nhưng không tìm được chu trình Hamilton từ ${start}.`+(pth?`<br>Có đường đi Hamilton: ${pth.join(" → ")}`:"");
+ return{steps:S,head:["STEP","CURRENT VERTEX","PATH","ACTION"],res:r,cyc,pth,capped,cx:"Backtracking: O(V!)"}}
+// Thuật toán Dijkstra (mảng, O(V²))
+function dijRun(src,dst){if(G.E.some(e=>W(e)<0))return{err:"Dijkstra không chạy được trên đồ thị có trọng số âm."};
+ const A=adj(),dist={},prev={},pe={},vis=new Set(),st=[],ids=G.V.map(v=>v.id);ids.forEach(x=>dist[x]=Infinity);dist[src]=0;let n=0;
+ const prv=()=>Object.keys(prev).map(k=>k+"←"+prev[k]).join(", ")||"-";
+ const P=(m,l,cur,es)=>{const vs={};vis.forEach(x=>vs[x]="visited");if(cur)vs[cur]="current";const lab={};ids.forEach(x=>lab[x]=fmt(dist[x]));st.push({m,l,vs,es:es||{},lab,row:[n++,[...vis].join(",")||"-",...ids.map(x=>fmt(dist[x])),prv()]})};
+ P("Khởi tạo",`dist[${src}]=0, các đỉnh khác = ∞.`,null);
+ for(;;){let u=null;ids.forEach(x=>{if(!vis.has(x)&&dist[x]<Infinity&&(u===null||dist[x]<dist[u]))u=x});if(u===null)break;vis.add(u);
+  P(`Chọn ${u} (dist=${dist[u]})`,`Chọn đỉnh chưa xét có khoảng cách nhỏ nhất: ${u} = ${dist[u]}.`,u);
+  for(const x of A[u]){if(vis.has(x.to))continue;const w=W(G.E[x.e]),nd=dist[u]+w,old=dist[x.to],up=nd<old;
+   if(up){dist[x.to]=nd;prev[x.to]=u;pe[x.to]=x.e}
+   P(`Relax ${u}→${x.to}`,`Relax cạnh ${u}→${x.to}. Hiện tại dist[${x.to}]=${fmt(old)}. Mới = ${dist[u]} + ${w} = ${nd}. ${nd} ${up?"<":"≥"} ${fmt(old)} nên ${up?`cập nhật dist[${x.to}]=${nd}, prev[${x.to}]=${u}`:"không cập nhật"}.`,u,{[x.e]:"active"})}}
+ let r=`Source: ${src}<br>`;const path=[];
+ if(dst&&dist[dst]<Infinity){for(let c=dst;c!==undefined;c=prev[c])path.unshift(c);const vs={},es={};path.forEach(x=>vs[x]="path");path.slice(1).forEach(x=>es[pe[x]]="path");
+  const lab={};ids.forEach(x=>lab[x]=fmt(dist[x]));st.push({m:"Đường đi ngắn nhất",l:`Truy vết prev từ ${dst}: ${path.join(" → ")}.`,vs,es,lab,row:[n++,"xong",...ids.map(x=>fmt(dist[x])),prv()]});
+  r+=`Shortest path: <b>${path.join(" → ")}</b><br>Shortest distance: <b>${dist[dst]}</b>`}
+ else r+=dst?`Không có đường đi từ ${src} đến ${dst}.`:"";
+ r+=`<br>Khoảng cách tới các đỉnh: ${ids.map(x=>x+"="+fmt(dist[x])).join(", ")}`;
+ return{steps:st,head:["STEP","VISITED",...ids,"PREVIOUS"],res:r,cx:"Dijkstra mảng: O(V²) · hàng đợi ưu tiên: O((V+E) log V)"}}
+// ===== Bellman-Ford & Johnson =====
+const edgeList=()=>{const L=[];G.E.forEach((e,i)=>{L.push({u:e.u,v:e.v,w:W(e),e:i});if(!G.dir&&e.u!==e.v)L.push({u:e.v,v:e.u,w:W(e),e:i})});return L};
+function bfCore(ids,L,src,emit){const dist={},prev={},pe={};ids.forEach(x=>dist[x]=Infinity);dist[src]=0;
+ emit("Khởi tạo",`dist[${src}]=0, các đỉnh khác = ∞.`,null,{},0,dist,prev,{});
+ for(let it=1;it<ids.length;it++){let ch=false;
+  for(const x of L){const es=x.e>=0?{[x.e]:"active"}:{};
+   if(dist[x.u]===Infinity){emit(`Lần ${it}: ${x.u}→${x.v}`,`dist[${x.u}]=∞ nên chưa thể relax cạnh ${x.u}→${x.v}.`,x.u,es,it,dist,prev,{});continue}
+   const nd=dist[x.u]+x.w,old=dist[x.v],up=nd<old;if(up){dist[x.v]=nd;prev[x.v]=x.u;pe[x.v]=x.e;ch=true}
+   emit(`Lần ${it}: relax ${x.u}→${x.v}`,`Lần lặp ${it}, relax ${x.u}→${x.v}. Hiện tại dist[${x.v}]=${fmt(old)}. Mới = ${dist[x.u]} + ${x.w} = ${nd}. ${nd} ${up?"<":"≥"} ${fmt(old)} nên ${up?`cập nhật dist[${x.v}]=${nd}, prev[${x.v}]=${x.u}`:"không cập nhật"}.`,x.u,es,it,dist,prev,up?{[x.v]:"visited"}:{})}
+  if(!ch){emit(`Lần ${it} không đổi`,`Không dist nào thay đổi ở lần lặp ${it} nên dừng sớm.`,null,{},it,dist,prev,{});break}}
+ for(const x of L){if(dist[x.u]!==Infinity&&dist[x.u]+x.w<dist[x.v]){
+   prev[x.v]=x.u;pe[x.v]=x.e;let c=x.v;for(let i=0;i<ids.length;i++)c=prev[c];
+   const cyc=[c];for(let y=prev[c];y!==c&&y!==undefined;y=prev[y])cyc.push(y);cyc.reverse();
+   const vx={},es={};cyc.forEach(k=>{if(k in pe&&pe[k]>=0)es[pe[k]]="active";vx[k]="warning"});
+   emit("Phát hiện chu trình âm",`Lượt kiểm tra thứ ${ids.length}: cạnh ${x.u}→${x.v} vẫn relax được (${fmt(dist[x.u])} + ${x.w} < ${fmt(dist[x.v])}) ⇒ có chu trình âm đi qua ${cyc.join(" → ")}.`,null,es,ids.length,dist,prev,vx);
+   return{dist,prev,pe,neg:cyc.concat(cyc[0])}}}
+ emit("Không có chu trình âm",`Lượt kiểm tra thứ ${ids.length}: không cạnh nào relax được nữa ⇒ không có chu trình âm, dist là đúng.`,null,{},ids.length,dist,prev,{});
+ return{dist,prev,pe,neg:null}}
+function bfRun(src,dst){const ids=G.V.map(v=>v.id),L=edgeList(),st=[];let n=0;
+ const prv=p=>Object.keys(p).map(k=>k+"←"+p[k]).join(", ")||"-";
+ const emit=(m,l,cur,es,it,dist,prev,vx)=>{const vs=Object.assign({},vx);if(cur&&!vs[cur])vs[cur]="current";const lab={};ids.forEach(x=>lab[x]=fmt(dist[x]));st.push({m,l,vs,es:es||{},lab,row:[n++,it,...ids.map(x=>fmt(dist[x])),prv(prev)]})};
+ const R=bfCore(ids,L,src,emit),head=["STEP","LẦN LẶP",...ids,"PREVIOUS"],cx="Bellman-Ford: O(V·E)";
+ let r=`Source: ${src}<br>`;
+ if(R.neg)return{steps:st,head,res:r+`Negative cycle: <span class="badge no">YES</span><br>Chu trình âm: <b>${R.neg.join(" → ")}</b><br>Đường đi ngắn nhất không xác định.`,cx};
+ r+=`Negative cycle: <span class="badge yes">NO</span><br>`;
+ if(dst&&R.dist[dst]<Infinity){const path=[];for(let c=dst;c!==undefined;c=R.prev[c])path.unshift(c);const vs={},es={};path.forEach(x=>vs[x]="path");path.slice(1).forEach(x=>es[R.pe[x]]="path");
+  const lab={};ids.forEach(x=>lab[x]=fmt(R.dist[x]));st.push({m:"Đường đi ngắn nhất",l:`Truy vết prev từ ${dst}: ${path.join(" → ")}.`,vs,es,lab,row:[n++,"xong",...ids.map(x=>fmt(R.dist[x])),prv(R.prev)]});
+  r+=`Shortest path: <b>${path.join(" → ")}</b><br>Shortest distance: <b>${R.dist[dst]}</b>`}
+ else r+=dst?`Không có đường đi từ ${src} đến ${dst}.`:"";
+ r+=`<br>Khoảng cách tới các đỉnh: ${ids.map(x=>x+"="+fmt(R.dist[x])).join(", ")}`;
+ return{steps:st,head,res:r,cx}}
+function johnRun(){const ids=G.V.map(v=>v.id),L=edgeList(),st=[],Q="q*";let n=0;
+ const ids2=[Q,...ids],L2=[...ids.map(v=>({u:Q,v,w:0,e:-1})),...L];
+ const push=(ph,m,l,vs,es,lab,info)=>st.push({m,l,vs,es:es||{},lab:lab||{},row:[n++,ph,info]});
+ const P1="1. Bellman-Ford từ "+Q,head=["STEP","GIAI ĐOẠN","CHI TIẾT"],cx="Johnson: O(V·E + V·(V²)) với Dijkstra mảng, hoặc O(V·E + V·(V+E) log V) với hàng đợi ưu tiên";
+ push(P1,`Thêm đỉnh ảo ${Q}`,`Thêm đỉnh ảo ${Q} nối tới mọi đỉnh bằng cạnh trọng số 0 rồi chạy Bellman-Ford từ ${Q} để tính h(v) (thế năng của đỉnh).`,{},{},{},"-");
+ const emit=(m,l,cur,es,it,dist,prev,vx)=>{const lab={};ids.forEach(x=>lab[x]=fmt(dist[x]));const vs=Object.assign({},vx);if(cur&&cur!==Q&&!vs[cur])vs[cur]="current";push(P1,m,l,vs,es,lab,`h: ${ids.map(x=>x+"="+fmt(dist[x])).join(", ")}`)};
+ const R=bfCore(ids2,L2,Q,emit);
+ if(R.neg)return{steps:st,head,res:`Negative cycle: <span class="badge no">YES</span><br>Chu trình âm: <b>${R.neg.filter(x=>x!==Q).join(" → ")}</b><br>Johnson không áp dụng được khi có chu trình âm.`,cx};
+ const h=R.dist,L3=L.map(x=>({...x,w2:x.w+h[x.u]-h[x.v]})),labH={};ids.forEach(x=>labH[x]=fmt(h[x]));
+ const esAll={};L3.forEach(x=>esAll[x.e]="active");const seen=new Set(),lst=[];L3.forEach(x=>{if(!seen.has(x.e)){seen.add(x.e);lst.push(`${x.u}→${x.v}: ${x.w}+${h[x.u]}−(${h[x.v]})=${x.w2}`)}});
+ push("2. Đổi trọng số","Đổi trọng số: w'(u,v)=w(u,v)+h(u)−h(v) ≥ 0",`Mọi cạnh có w'=w+h(u)−h(v) ≥ 0 (do bất đẳng thức tam giác của h), nên chạy Dijkstra được. ${lst.join("; ")}.`,{},esAll,labH,lst.join("; "));
+ const D={};
+ ids.forEach(s=>{const d={};ids.forEach(x=>d[x]=Infinity);d[s]=0;const vis=new Set();
+  for(;;){let u=null;ids.forEach(x=>{if(!vis.has(x)&&d[x]<Infinity&&(u===null||d[x]<d[u]))u=x});if(u===null)break;vis.add(u);L3.forEach(x=>{if(x.u===u&&d[u]+x.w2<d[x.v])d[x.v]=d[u]+x.w2})}
+  const t={},vs={},lab={};ids.forEach(x=>{t[x]=d[x]===Infinity?Infinity:d[x]-h[s]+h[x];if(d[x]<Infinity)vs[x]="visited";lab[x]=fmt(t[x])});vs[s]="current";D[s]=t;
+  push("3. Dijkstra từ "+s,`Dijkstra từ ${s} trên trọng số w'`,`Chạy Dijkstra từ ${s} với w' được d'. Khôi phục khoảng cách thật: d(${s},v)=d'(${s},v)−h(${s})+h(v). Kết quả: ${ids.map(x=>x+"="+fmt(t[x])).join(", ")}.`,vs,{},lab,`d': ${ids.map(x=>x+"="+fmt(d[x])).join(", ")} → d: ${ids.map(x=>x+"="+fmt(t[x])).join(", ")}`)});
+ push("4. Kết quả","Ma trận khoảng cách ngắn nhất mọi cặp",`Đã có khoảng cách ngắn nhất giữa mọi cặp đỉnh (xem bảng Kết quả).`,{},{},labH,"xong");
+ const tb=`<table><tr><th></th>${ids.map(x=>`<th>${x}</th>`).join("")}</tr>${ids.map(s=>`<tr><th>${s}</th>${ids.map(t=>`<td>${fmt(D[s][t])}</td>`).join("")}</tr>`).join("")}</table>`;
+ return{steps:st,head,res:`Negative cycle: <span class="badge yes">NO</span><br>h(v): ${ids.map(x=>x+"="+fmt(h[x])).join(", ")}<br><b>Ma trận khoảng cách mọi cặp:</b><br>${tb}`,cx}}
+
+// ===== CODE HIỂN THỊ CHO TỪNG THUẬT TOÁN (tô sáng theo bước) =====
+const CODE={"conn":["void bfs(int s) {", "    bool visited[MAXN] = {false};", "    int q[MAXN], front = 0, back = 0;", "    visited[s] = true; q[back++] = s;", "    while (front < back) {", "        int u = q[front++];", "        for (int i = head[u]; i != -1; i = nxt[i]) {", "            int v = to[i];", "            if (visited[v]) continue;", "            visited[v] = true; q[back++] = v;", "        }", "    }", "    // liên thông nếu back == n (đã thăm đủ n đỉnh)", "}"],
+"euler":["int res[MAXM + 1], cnt = 0;", "void hierholzer(int s) {", "    int st[MAXM + 1], top = 0;", "    st[top++] = s;", "    while (top > 0) {", "        int v = st[top - 1];", "        while (ptr[v] != -1 && used[id[ptr[v]]]) ptr[v] = nxt[ptr[v]];", "        if (ptr[v] != -1) {", "            int i = ptr[v]; used[id[i]] = true; st[top++] = to[i];", "        } else {", "            res[cnt++] = v; top--;", "        }", "    }", "    // đảo res[0..cnt-1] để có hành trình Euler", "}"],
+"ham":["bool ham(int path[], int len, int start) {", "    if (len == n)", "        return hasEdge(path[len - 1], start);   // duyệt head[] tìm cạnh về start", "    int last = path[len - 1];", "    for (int i = head[last]; i != -1; i = nxt[i]) {", "        int v = to[i];", "        if (inPath[v]) continue;", "        path[len] = v; inPath[v] = true;", "        if (ham(path, len + 1, start)) return true;", "        inPath[v] = false;   // quay lui", "    }", "    return false;", "}"],
+"dij":["void dijkstra(int s) {", "    long long dist[MAXN]; bool vis[MAXN] = {false};", "    for (int i = 0; i < n; i++) dist[i] = INF;", "    dist[s] = 0;", "    for (int it = 0; it < n; it++) {", "        int u = -1;", "        for (int i = 0; i < n; i++)   // chọn đỉnh chưa xét có dist nhỏ nhất", "            if (!vis[i] && dist[i] < INF && (u == -1 || dist[i] < dist[u])) u = i;", "        if (u == -1) break;", "        vis[u] = true;", "        for (int e = head[u]; e != -1; e = nxt[e]) {", "            int v = to[e];", "            if (dist[u] + w[e] < dist[v]) {", "                dist[v] = dist[u] + w[e]; prev[v] = u;", "            }", "        }", "    }", "}"],
+"bf":["bool bellmanFord(int s) {", "    long long dist[MAXN];", "    for (int i = 0; i < n; i++) dist[i] = INF;", "    dist[s] = 0;", "    for (int it = 1; it < n; it++) {", "        for (int j = 0; j < m; j++) {   // duyệt mọi cạnh (u, v, w)", "            int u = eu[j], v = ev[j];", "            if (dist[u] != INF && dist[u] + ew[j] < dist[v]) {", "                dist[v] = dist[u] + ew[j]; prev[v] = u;", "            }", "        }", "    }", "    for (int j = 0; j < m; j++)", "        if (dist[eu[j]] != INF && dist[eu[j]] + ew[j] < dist[ev[j]])", "            return false;   // có chu trình âm", "    return true;", "}"],
+"john":["void johnson() {", "    // thêm đỉnh ảo q = n, cạnh q -> v trọng số 0 vào danh sách cạnh", "    bellmanFord(q); h[v] = dist[v];   // dừng nếu có chu trình âm", "    for (int j = 0; j < m; j++) ew[j] += h[eu[j]] - h[ev[j]];   // w' >= 0", "    for (int s = 0; s < n; s++) {", "        dijkstra(s);   // chạy trên w'", "        for (int v = 0; v < n; v++) d[s][v] = dist[v] - h[s] + h[v];", "    }", "}"]};
+const CNAME={conn:"BFS · C++ thuần",euler:"Hierholzer · C++ thuần",ham:"Backtracking · C++ thuần",dij:"Dijkstra · C++ thuần",bf:"Bellman-Ford · C++ thuần",john:"Johnson · C++ thuần"};
+// Xác định dòng code tương ứng với bước đang chạy
+function lineOf(a,s){const m=s.m||"",l=s.l||"",ph=String(s.row&&s.row[1]||""),no=/không cập nhật/.test(l);
+ if(a==="conn")return m.startsWith("Bắt đầu")?3:m.startsWith("Từ")?9:m.startsWith("Cạnh")?8:12;
+ if(a==="euler")return m.startsWith("Xuất")?2:m.startsWith("Đi cạnh")?8:m.startsWith("Lùi")?10:14;
+ if(a==="ham")return m.startsWith("Bắt đầu")?0:m.startsWith("Chọn")?7:m.startsWith("Quay lui")?9:m.startsWith("Ngõ cụt")?11:2;
+ if(a==="dij")return m.startsWith("Khởi")?3:m.startsWith("Chọn")?7:m.startsWith("Relax")?(no?12:13):17;
+ if(a==="bf")return m.startsWith("Khởi")?3:m.includes("relax")?(no?7:8):/không đổi/.test(m)?4:m.startsWith("Lần")?5:m.startsWith("Phát hiện")?14:15;
+ return ph[0]==="1"?(m.startsWith("Thêm")?1:2):ph[0]==="2"?3:ph[0]==="3"?5:8}
+function codeR(){const a=(RUN&&RUN.algo)||algo,L=CODE[a],c=$("code");if(!c)return;$("cn").textContent=CNAME[a];
+ const h=RUN&&RUN.steps[cur]?lineOf(a,RUN.steps[cur]):-1;
+ c.innerHTML=L.map((t,i)=>`<div class="${i===h?"cl":""}"><i>${i+1}</i>${t.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</div>`).join("");
+ const e=c.querySelector(".cl");if(e)c.scrollTop=Math.max(0,e.offsetTop-c.clientHeight/2)}
+// ===== BỘ ĐIỀU KHIỂN ANIMATION DÙNG CHUNG =====
+let RUN=null,cur=0,timer=null,mode="move",algo="conn",sel=null,drag=null;
+const stop=()=>{clearInterval(timer);timer=null};
+function show(i){if(!RUN)return;cur=Math.max(0,Math.min(RUN.steps.length-1,i));draw();panel()}
+function play(){if(!RUN||!RUN.steps.length)return;if(cur>=RUN.steps.length-1)cur=0;stop();timer=setInterval(()=>{if(cur>=RUN.steps.length-1)return stop();show(cur+1)},+$("sp").value)}
+function panel(){const n=RUN.steps.length,s=RUN.steps[cur];$("pg").style.width=(n>1?cur/(n-1)*100:100)+"%";$("sc").textContent=`Bước ${cur+1}/${n}`;
+ $("ex2").innerHTML=`<b>${s.m}</b>`+($("lm").checked?`<br>${s.l}`:"");
+ $("tbl").innerHTML="<table><tr>"+RUN.head.map(h=>`<th>${h}</th>`).join("")+"</tr>"+RUN.steps.slice(0,cur+1).map((x,i)=>`<tr${i===cur?' style="background:#1d3557"':""}>${x.row.map((c,j)=>`<td${i===cur&&i>0&&j>0&&String(c)!==String(RUN.steps[i-1].row[j])?' class="chg"':""}>${c}</td>`).join("")}</tr>`).join("")+"</table>";
+ $("tbl").scrollTop=$("tbl").scrollHeight;codeR();$("stl").innerHTML=RUN.steps.map((x,i)=>i>=cur-10&&i<=cur+30?`<div class="${i===cur?"c":""}" data-i="${i}">Step ${i+1}: ${x.m}</div>`:"").join("");const cc=$("stl").querySelector(".c");if(cc)$("stl").scrollTop=Math.max(0,cc.offsetTop-50)}
+$("stl").onclick=e=>{const d=e.target.closest("[data-i]");if(d){stop();show(+d.dataset.i)}};
+function runAlg(){stop();const s=$("s").value,t=$("t").value;if(!G.V.length)return msg("Đồ thị đang trống.");let r;
+ if(algo==="conn")r=connSteps(s);else if(algo==="euler")r=eulerRun();else if(algo==="ham")r=hamRun(s,true);else if(algo==="bf")r=bfRun(s,t);else if(algo==="john")r=johnRun();else r=dijRun(s,t);
+ if(r.err)return msg(r.err);RUN=r;r.algo=algo;cur=0;$("alg").innerHTML=`<h4>Kết quả</h4>${r.res}<br><span class="m">Độ phức tạp: ${r.cx}</span>`;
+ if(!r.steps.length){draw();$("tbl").innerHTML="";$("stl").innerHTML="";$("ex2").innerHTML="Không có gì để mô phỏng: điều kiện không thỏa.";$("sc").textContent="Bước 0/0";return}
+ show(0)}
+function msg(t){RUN=null;draw();$("ex2").innerHTML=`<span style="color:var(--bad)">${t}</span>`}
+// ===== VẼ ĐỒ THỊ BẰNG SVG =====
+const SYM={current:"▶",visited:"✓",path:"●",warning:"✗"};
+function draw(){const s=(RUN&&RUN.steps[cur])||{},vs=Object.assign({},s.vs||{}),es=s.es||{},lab=s.lab||{};if(sel)vs[sel]="selected";
+ let h='<defs><marker id="arm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker></defs>';
+ const P={},grp={};G.V.forEach(v=>P[v.id]=v);G.E.forEach((e,i)=>{const k=[e.u,e.v].sort().join("|");(grp[k]=grp[k]||[]).push(i)});
+ G.E.forEach((e,i)=>{const a=P[e.u],b=P[e.v],gl=grp[[e.u,e.v].sort().join("|")];let off=(gl.indexOf(i)-(gl.length-1)/2)*46,d,lx,ly;
+  if(e.u===e.v){d=`M${a.x-12} ${a.y-17}C${a.x-50} ${a.y-80} ${a.x+50} ${a.y-80} ${a.x+12} ${a.y-17}`;lx=a.x;ly=a.y-65}
+  else{const dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L;off*=e.u<e.v?1:-1;const cx=(a.x+b.x)/2+nx*off*2,cy=(a.y+b.y)/2+ny*off*2;
+   const u1=Math.hypot(cx-a.x,cy-a.y)||1,u2=Math.hypot(cx-b.x,cy-b.y)||1,sx=a.x+(cx-a.x)/u1*21,sy=a.y+(cy-a.y)/u1*21,ex=b.x+(cx-b.x)/u2*(G.dir?25:21),ey=b.y+(cy-b.y)/u2*(G.dir?25:21);
+   d=`M${sx} ${sy}Q${cx} ${cy} ${ex} ${ey}`;lx=.25*a.x+.5*cx+.25*b.x;ly=.25*a.y+.5*cy+.25*b.y}
+  h+=`<path class="e ${es[i]||""}" d="${d}" ${G.dir?'marker-end="url(#arm)"':""}/><path class="hit" data-e="${i}" d="${d}"/>`;
+  if(G.wt)h+=`<text class="w" x="${lx}" y="${ly-4}">${e.w}</text>`});
+ G.V.forEach(v=>{const c=vs[v.id]||"";h+=`<g class="v ${c}" data-v="${v.id}" transform="translate(${v.x} ${v.y})"><circle r="20"/><text y="5">${v.id}</text>${SYM[c]?`<text class="st" y="36">${SYM[c]}</text>`:""}${lab[v.id]!==undefined?`<text class="lab" y="-28">${lab[v.id]}</text>`:""}</g>`});
+ $("cv").innerHTML=h}
+const pt=e=>{const r=$("cv").getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*800,y:(e.clientY-r.top)/r.height*480}};
+function nid(){for(let i=0;;i++){const id=i<26?String.fromCharCode(65+i):"V"+i;if(!G.V.some(v=>v.id===id))return id}}
+function changed(){stop();RUN=null;cur=0;sel=null;codeR();draw();refresh();fillSel();["tbl","stl","alg"].forEach(x=>$(x).innerHTML="");$("ex2").textContent="Đồ thị đã thay đổi. Chạy lại thuật toán để xem kết quả mới.";$("sc").textContent="Bước 0/0";$("pg").style.width=0}
+function addE(u,v){let w=1;if(G.wt){w=parseFloat(prompt("Trọng số cạnh "+u+"-"+v+":","1"));if(isNaN(w))return}
+ if($("simple").checked&&(u===v||G.E.some(e=>G.dir?e.u===u&&e.v===v:(e.u===u&&e.v===v)||(e.u===v&&e.v===u))))return msg("Đang ở chế độ đồ thị đơn: không cho cạnh trùng/khuyên.");G.E.push({u,v,w});changed()}
+const svg=$("cv");
+svg.addEventListener("pointerdown",e=>{const vg=e.target.closest("[data-v]"),eg=e.target.closest("[data-e]"),p=pt(e);
+ if(mode==="vertex"&&!vg&&!eg){G.V.push({id:nid(),x:p.x,y:p.y});changed();return}
+ if(vg){const id=vg.dataset.v;if(mode==="del"){G.V=G.V.filter(v=>v.id!==id);G.E=G.E.filter(x=>x.u!==id&&x.v!==id);changed();return}
+  if(mode==="edge"){if(!sel){sel=id;draw()}else{const a=sel;sel=null;addE(a,id)}return}
+  drag=id;svg.setPointerCapture(e.pointerId)}
+ else if(eg&&mode==="del"){G.E.splice(+eg.dataset.e,1);changed()}});
+svg.addEventListener("pointermove",e=>{if(!drag)return;const p=pt(e),v=G.V.find(x=>x.id===drag);v.x=Math.max(25,Math.min(775,p.x));v.y=Math.max(25,Math.min(455,p.y));draw()});
+svg.addEventListener("pointerup",()=>{drag=null;refresh()});
+svg.addEventListener("dblclick",e=>{const vg=e.target.closest("[data-v]"),eg=e.target.closest("[data-e]");
+ if(vg){const n=(prompt("Tên mới cho đỉnh:",vg.dataset.v)||"").trim(),o=vg.dataset.v;if(!n||n===o||G.V.some(v=>v.id===n))return;G.V.find(v=>v.id===o).id=n;G.E.forEach(x=>{if(x.u===o)x.u=n;if(x.v===o)x.v=n});changed()}
+ else if(eg&&G.wt){const x=G.E[+eg.dataset.e],w=parseFloat(prompt("Trọng số mới:",x.w));if(!isNaN(w)){x.w=w;changed()}}});
+// ===== PHÂN TÍCH + BIỂU DIỄN (đọc từ G, không hard-code) =====
+let hamTxt="—";
+function refresh(force){const n=G.V.length,m=G.E.length,d=degs(),ds=G.V.map(v=>d[v.id].t),c=conn(),I=eulerInfo(),yn=b=>`<span class="badge ${b?"yes":"no"}">${b?"YES":"NO"}</span>`;
+ if(force&&n){const r=hamRun(G.V[0].id,false);let t=r.cyc?"CYCLE FOUND":null,capped=!!r.capped;if(!t){for(const v of G.V){const q=hamRun(v.id,false);capped=capped||q.capped;if(q.pth){t="PATH ONLY";break}}}hamTxt=t||(capped?"UNKNOWN":"NOT FOUND")}else if(!force)hamTxt="—";
+ const den=n>1?(G.dir?m/(n*(n-1)):2*m/(n*(n-1))):0;
+ $("an").innerHTML=`<table><tr><td>Vertices</td><td>${n}</td></tr><tr><td>Edges</td><td>${m}</td></tr><tr><td>Connected</td><td>${G.dir?`Strong ${yn(c.strong)} Weak ${yn(c.weak)}`:yn(c.weak)}</td></tr><tr><td>Directed</td><td>${yn(G.dir)}</td></tr><tr><td>Weighted</td><td>${yn(G.wt)}</td></tr><tr><td>Simple</td><td>${yn(isSimple())}</td></tr>
+ <tr><td>Max / Min degree</td><td>${n?Math.max(...ds)+" / "+Math.min(...ds):"-"}</td></tr><tr><td>Average degree</td><td>${n?(ds.reduce((a,b)=>a+b,0)/n).toFixed(2):"-"}</td></tr><tr><td>Density</td><td>${den.toFixed(3)}</td></tr>
+ <tr><td>Degree sequence</td><td>${[...ds].sort((a,b)=>b-a).join(", ")||"-"}</td></tr><tr><td>Degrees</td><td>${G.V.map(v=>v.id+": "+(G.dir?`in ${d[v.id].i}/out ${d[v.id].o}`:d[v.id].t)).join("; ")||"-"}</td></tr>
+ <tr><td>Σdeg = ${G.dir?"2|E|":"2|E|"}</td><td>${ds.reduce((a,b)=>a+b,0)} = 2×${m}</td></tr><tr><td>Euler Circuit / Path</td><td>${yn(I.circ)} / ${yn(I.path)}</td></tr><tr><td>Hamilton</td><td>${hamTxt}</td></tr></table>`;
+ const A=adj(),ids=G.V.map(v=>v.id);
+ $("rep").innerHTML=`<b>Edge list</b><div class="mono">${G.E.map(e=>e.u+(G.dir?"→":"-")+e.v+(G.wt?" ("+e.w+")":"")).join("<br>")||"(trống)"}</div><b>Adjacency list</b><div class="mono">${ids.map(u=>u+": "+A[u].map(x=>x.to).join(", ")).join("<br>")||"(trống)"}</div>
+ <b>Adjacency matrix</b><div class="scr"><table><tr><th></th>${ids.map(x=>"<th>"+x+"</th>").join("")}</tr>${ids.map(r=>`<tr><th>${r}</th>${ids.map(c2=>`<td>${A[r].filter(x=>x.to===c2).length*((!G.dir&&r===c2)?2:1)}</td>`).join("")}</tr>`).join("")}</table></div>`}
+$("analyze").onclick=()=>refresh(true);
+// ===== TẠO ĐỒ THỊ TỪ VĂN BẢN =====
+const circle=(ids)=>ids.map((id,i)=>({id,x:400+290*Math.cos(2*Math.PI*i/ids.length-Math.PI/2),y:240+190*Math.sin(2*Math.PI*i/ids.length-Math.PI/2)}));
+function mk(vstr,estr,dir,wt,simple){const ids=vstr.split(/[,\s]+/).filter(Boolean);if(!ids.length)return"Chưa nhập đỉnh.";if(new Set(ids).size!==ids.length)return"Tên đỉnh bị trùng.";
+ const E=[],seen=new Set();let hasW=wt;
+ for(const [i,ln] of estr.split("\n").map(s=>s.trim()).filter(Boolean).entries()){let p=ln.split("-").map(s=>s.trim());if(p.length===4&&p[2]==="")p=[p[0],p[1],"-"+p[3]];
+  if(p.length<2||p.length>3)return`Dòng ${i+1} sai định dạng (u-v hoặc u-v-w): "${ln}"`;
+  if(!ids.includes(p[0])||!ids.includes(p[1]))return`Dòng ${i+1}: đỉnh không tồn tại trong danh sách đỉnh.`;
+  let w=1;if(p.length===3){w=parseFloat(p[2]);if(isNaN(w))return`Dòng ${i+1}: trọng số không phải số.`;hasW=true}
+  const k=dir?p[0]+">"+p[1]:[p[0],p[1]].sort().join("|");if(simple&&(p[0]===p[1]||seen.has(k)))return`Dòng ${i+1}: đồ thị đơn không cho phép cạnh trùng/khuyên.`;seen.add(k);E.push({u:p[0],v:p[1],w})}
+ G={V:circle(ids),E,dir,wt:hasW};$("dir").checked=dir;$("wt").checked=hasW;return null}
+$("mk").onclick=()=>{const e=mk($("fv").value,$("fe").value,$("dir").checked,$("wt").checked,$("simple").checked);$("err").textContent=e||"";if(!e)changed()};
+const kn=n=>{const a=[],ids=[...Array(n)].map((_,i)=>String.fromCharCode(65+i));ids.forEach((x,i)=>ids.slice(i+1).forEach(y=>a.push(x+"-"+y)));return[ids.join(","),a.join("\n")]};
+const EX=[["1. Simple Graph","A,B,C,D,E","A-B\nA-C\nB-D\nC-D\nC-E",0,0,"conn"],["2. Complete Graph K5",...kn(5),0,0,"ham"],["3. Disconnected Graph","A,B,C,D,E","A-B\nC-D",0,0,"conn"],["4. Euler Graph","A,B,C,D","A-B\nB-C\nC-D\nD-A",0,0,"euler"],["5. Non-Euler Graph","A,B,C,D","A-B\nA-C\nA-D",0,0,"euler"],
+ ["6. Hamilton Graph","A,B,C,D","A-B\nB-C\nC-D\nD-A\nA-C\nB-D",0,0,"ham"],["7. Dijkstra Weighted","A,B,C,D","A-B-4\nA-C-2\nC-B-1\nB-D-5\nC-D-8",0,1,"dij"],["8. Bellman-Ford (cạnh âm)","A,B,C,D,E","A-B-6\nA-D-7\nB-C-5\nB-D-8\nB-E--4\nC-B--2\nD-C--3\nD-E-9\nE-C-7\nE-A-2",1,1,"bf"],["9. Johnson (cạnh âm)","A,B,C,D","A-B--2\nB-C-3\nC-A-4\nC-D--1\nD-B-5",1,1,"john"]];
+$("ex").innerHTML=EX.map((x,i)=>`<option value="${i}">${x[0]}</option>`).join("");
+$("loadEx").onclick=()=>{const x=EX[$("ex").value];mk(x[1],x[2],!!x[3],!!x[4],false);$("fv").value=x[1];$("fe").value=x[2];pickAlgo(x[5]);changed();refresh(true)};
+$("rnd").onclick=()=>{const n=6,ids=[...Array(n)].map((_,i)=>String.fromCharCode(65+i)),E=[];for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)if(Math.random()<.45)E.push(ids[i]+"-"+ids[j]+"-"+(1+Math.floor(Math.random()*9)));for(let i=1;i<n&&!E.length;i++)E.push(ids[0]+"-"+ids[i]+"-1");mk(ids.join(","),E.join("\n"),$("dir").checked,true,true);changed()};
+$("clr").onclick=()=>{G.V=[];G.E=[];changed()};
+$("dir").onchange=e=>{G.dir=e.target.checked;changed()};$("wt").onchange=e=>{G.wt=e.target.checked;changed()};
+// ===== GIAO DIỆN ĐIỀU KHIỂN =====
+$("modes").innerHTML=[["move","Move"],["vertex","Add Vertex"],["edge","Add Edge"],["del","Delete"]].map(([k,t])=>`<button data-m="${k}" aria-label="${t}" class="${k==="move"?"on":""}">${t}</button>`).join("");
+$("modes").onclick=e=>{const b=e.target.closest("[data-m]");if(!b)return;mode=b.dataset.m;sel=null;[...$("modes").children].forEach(x=>x.classList.toggle("on",x===b));draw()};
+const AL=[["conn","Connectivity (BFS)"],["euler","Euler"],["ham","Hamilton"],["dij","Dijkstra"],["bf","Bellman-Ford"],["john","Johnson"]];
+$("algos").innerHTML=AL.map(([k,t])=>`<button data-a="${k}" aria-label="${t}">${t}</button>`).join("");
+function pickAlgo(k){algo=k;if(RUN&&RUN.algo!==k){stop();RUN=null;cur=0;draw();["tbl","stl","alg"].forEach(x=>$(x).innerHTML="");$("ex2").textContent="Nhấn “Chạy thuật toán” để mô phỏng.";$("sc").textContent="Bước 0/0";$("pg").style.width=0}codeR();[...$("algos").children].forEach(x=>x.classList.toggle("on",x.dataset.a===k));$("t").parentElement.style.display=k==="dij"||k==="bf"?"":"none";$("s").parentElement.style.display=k==="euler"||k==="john"?"none":""}
+$("algos").onclick=e=>{const b=e.target.closest("[data-a]");if(b)pickAlgo(b.dataset.a)};
+function fillSel(){const o=G.V.map(v=>`<option>${v.id}</option>`).join(""),a=$("s").value,b=$("t").value;$("s").innerHTML=o;$("t").innerHTML=o;if(G.V.some(v=>v.id===a))$("s").value=a;if(G.V.some(v=>v.id===b))$("t").value=b;else if(G.V.length)$("t").value=G.V[G.V.length-1].id}
+$("run").onclick=runAlg;$("pl").onclick=play;$("pa").onclick=stop;$("pv").onclick=()=>{stop();show(cur-1)};$("nx").onclick=()=>{stop();show(cur+1)};$("rs").onclick=()=>{stop();show(0)};
+$("sp").onchange=()=>{if(timer)play()};$("lm").onchange=()=>RUN&&panel();$("pm").onclick=()=>document.body.classList.toggle("pres");
+document.addEventListener("keydown",e=>{if($("viz").classList.contains("on")&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){if(e.key==="ArrowRight"){stop();show(cur+1)}if(e.key==="ArrowLeft"){stop();show(cur-1)}}});
+// ===== LÝ THUYẾT =====
+let mc=0;
+function mini(V,E,o={}){const id="mk"+(mc++);let h=`<svg class="mini" viewBox="0 0 220 130">${o.dir?`<defs><marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7b8fb3"/></marker></defs>`:""}`;
+ E.forEach(([a,b,w,c],i)=>{const p=V[a],q=V[b];let d;if(a===b)d=`M${p[0]-8} ${p[1]-12}C${p[0]-30} ${p[1]-50} ${p[0]+30} ${p[1]-50} ${p[0]+8} ${p[1]-12}`;else{const dx=q[0]-p[0],dy=q[1]-p[1],L=Math.hypot(dx,dy),s=o.dir?15:0,cx=(p[0]+q[0])/2-dy/L*(c||0),cy=(p[1]+q[1])/2+dx/L*(c||0);d=`M${p[0]} ${p[1]}Q${cx} ${cy} ${q[0]-dx/L*s} ${q[1]-dy/L*s}`;if(w!==undefined&&w!=="")h+=`<text x="${cx}" y="${cy-3}" fill="#f59e0b" style="text-anchor:middle;font-size:11px">${w}</text>`}
+  h+=`<path class="me" data-u="${a}" data-w="${b}" pathLength="100" d="${d}" ${o.dir?`marker-end="url(#${id})"`:""} style="animation-delay:${i*.4}s"/>`});
+ Object.keys(V).forEach(k=>h+=`<g data-v="${k}"><circle cx="${V[k][0]}" cy="${V[k][1]}" r="14"/><text x="${V[k][0]}" y="${V[k][1]+4}">${k}</text></g>`);return h+"</svg>"}
+const sq={A:[60,30],B:[160,30],C:[60,100],D:[160,100]},tri={A:[110,20],B:[50,105],C:[170,105]};
+const k5={A:[110,15],B:[190,70],C:[160,120],D:[60,120],E:[30,70]},ke=[];Object.keys(k5).forEach((x,i,a)=>a.slice(i+1).forEach(y=>ke.push([x,y])));
+const bip={A:[40,30],B:[40,100],C:[180,20],D:[180,65],E:[180,110]};
+const TY=[["Đồ thị vô hướng","Cạnh không phân biệt chiều: (u,v) = (v,u).","Mạng bạn bè, đường hai chiều.",mini(sq,[["A","B"],["A","C"],["B","D"],["C","D"]])],
+["Đồ thị có hướng","Cạnh là cặp có thứ tự (u,v), có mũi tên.","Liên kết web, luồng công việc.",mini(tri,[["A","B"],["B","C"],["C","A"]],{dir:1})],
+["Đồ thị đơn","Không có khuyên và không có cạnh song song.","Mô hình cơ bản của mạng quan hệ.",mini(sq,[["A","B"],["B","D"],["A","C"]])],
+["Đa đồ thị","Cho phép cạnh song song (và khuyên).","Nhiều tuyến bay/đường giữa hai thành phố.",mini(sq,[["A","B",0,0],["A","B","",22],["B","D"],["D","D"]])],
+["Đồ thị đầy đủ Kₙ","Mọi cặp đỉnh đều kề nhau. |E| = n(n−1)/2. Cạnh vẽ lần lượt.","Mạng kết nối hoàn toàn, lịch thi đấu vòng tròn.",mini(k5,ke)],
+["Đồ thị rỗng","Có đỉnh nhưng |E| = 0.","Trạng thái ban đầu khi xây dựng đồ thị.",mini(tri,[])],
+["Đồ thị liên thông","Mọi cặp đỉnh đều có đường đi.","Mạng máy tính không bị tách rời.",mini(sq,[["A","B"],["B","D"],["D","C"]])],
+["Đồ thị không liên thông","Có ≥ 2 thành phần liên thông.","Phát hiện cụm bạn bè tách biệt.",mini(sq,[["A","B"],["C","D"]])],
+["Đồ thị có trọng số","Mỗi cạnh mang một số (chi phí, khoảng cách).","Bản đồ đường đi, Dijkstra.",mini(tri,[["A","B",4],["B","C",2],["A","C",7]])],
+["Đồ thị hai phía","V chia thành X, Y; cạnh chỉ nối X với Y.","Ghép cặp sinh viên–đề tài, phân công việc.",mini(bip,[["A","C"],["A","D"],["B","D"],["B","E"]])]];
+const T=[["Khái niệm đồ thị","vertex edge adjacent loop khái niệm",`<p>Đồ thị <b>G = (V, E)</b>: V là tập đỉnh, E là tập cạnh. Ví dụ V = {A,B,C,D}, E = {(A,B),(A,C),(B,D),(C,D)}.</p><p>Đỉnh kề: hai đỉnh nối bởi một cạnh. Cạnh liên thuộc với hai đầu mút của nó. Khuyên: cạnh nối đỉnh với chính nó. Cạnh song song: nhiều cạnh cùng cặp đỉnh.</p><div class="row"><div class="hv">${mini(sq,[["A","B"],["A","C"],["B","D"],["C","D"]])}</div><div class="info m">Rê chuột vào một đỉnh để xem đỉnh kề và cạnh liên thuộc.</div></div>`],
+["Các loại đồ thị","types vô hướng có hướng đơn đầy đủ rỗng hai phía trọng số",`<div class="cards">${TY.map(t=>`<div class="card"><b>${t[0]}</b>${t[3]}<div>${t[1]}</div><div class="m">Ứng dụng: ${t[2]}</div></div>`).join("")}</div>`],
+["Bậc của đỉnh","degree bậc bắt tay handshake",`<p>deg(v) = số cạnh liên thuộc v (khuyên tính 2). Đồ thị có hướng: <b>indegree</b> (cạnh vào), <b>outdegree</b> (cạnh ra).</p><p><b>Định lý bắt tay:</b> Σ deg(v) = 2|E|. Ví dụ hình vuông: 2+2+2+2 = 8 = 2×4. Hệ quả: số đỉnh bậc lẻ luôn chẵn.</p><div class="row"><div class="hv">${mini(sq,[["A","B"],["A","C"],["B","D"],["C","D"]])}</div><div class="info m">Rê chuột vào đỉnh để xem bậc.</div></div>`],
+["Biểu diễn đồ thị","edge list adjacency matrix biểu diễn danh sách kề ma trận kề",`<p>Ba cách: <b>danh sách cạnh</b> (liệt kê từng cạnh), <b>danh sách kề</b> (mỗi đỉnh liệt kê các đỉnh kề), <b>ma trận kề</b> (M[i][j] = số cạnh nối i→j). Ma trận kề khác ma trận liên thuộc (đỉnh × cạnh).</p><button data-go="viz">Xem 3 biểu diễn cập nhật trực tiếp trong Visualizer</button>`],
+["Tính liên thông","connectivity liên thông bfs dfs",`<p>Đồ thị vô hướng liên thông nếu mọi cặp đỉnh có đường đi. Đồ thị có hướng: <b>liên thông mạnh</b> (đi được theo chiều mũi tên giữa mọi cặp), <b>liên thông yếu</b> (liên thông khi bỏ hướng). Kiểm tra bằng BFS/DFS từ một đỉnh: thăm đủ n đỉnh ⇒ liên thông. Độ phức tạp O(V+E).</p><button data-go="viz" data-al="conn">Chạy BFS</button>`],
+["Chu trình Euler","euler circuit path hierholzer",`<p>Đường đi Euler qua mỗi <b>cạnh</b> đúng một lần; chu trình Euler còn quay về đỉnh đầu. Vô hướng: chu trình ⇔ liên thông (các đỉnh có cạnh) và mọi đỉnh bậc chẵn; đường đi ⇔ có đúng 0 hoặc 2 đỉnh bậc lẻ. Tìm bằng Hierholzer, O(E).</p><button data-go="viz" data-al="euler">Chạy Euler</button>`],
+["Chu trình Hamilton","hamilton cycle backtracking",`<p>Đường đi Hamilton qua mỗi <b>đỉnh</b> đúng một lần; chu trình Hamilton quay về đỉnh đầu. Không có điều kiện cần và đủ đơn giản (các định lý Dirac, Ore chỉ là điều kiện đủ). Tìm bằng quay lui, O(V!) trong trường hợp xấu.</p><button data-go="viz" data-al="ham">Chạy Hamilton</button>`],
+["Dijkstra","dijkstra shortest path đường đi ngắn nhất",`<p>Tìm đường đi ngắn nhất từ đỉnh nguồn tới các đỉnh còn lại trong đồ thị trọng số <b>không âm</b>. Lặp: chọn đỉnh chưa xét có dist nhỏ nhất, relax các cạnh ra: nếu dist[u]+w &lt; dist[v] thì cập nhật dist[v], prev[v]=u.</p><button data-go="viz" data-al="dij">Chạy Dijkstra</button>`],
+["Bellman-Ford","bellman ford shortest path negative đường đi ngắn nhất trọng số âm",`<p>Tìm đường đi ngắn nhất từ một đỉnh nguồn, <b>cho phép cạnh trọng số âm</b>. Lặp V−1 lần, mỗi lần relax mọi cạnh: nếu dist[u]+w &lt; dist[v] thì cập nhật. Sau đó kiểm tra thêm một lượt: nếu còn relax được thì có <b>chu trình âm</b>. Độ phức tạp O(V·E). Với đồ thị vô hướng, một cạnh âm đã tạo chu trình âm.</p><button data-go="viz" data-al="bf">Chạy Bellman-Ford</button>`],
+["Johnson","johnson all pairs shortest path mọi cặp",`<p>Tìm đường đi ngắn nhất giữa <b>mọi cặp đỉnh</b> trên đồ thị có hướng có trọng số âm nhưng không có chu trình âm. Các bước: (1) thêm đỉnh ảo q nối tới mọi đỉnh với trọng số 0; (2) chạy Bellman-Ford từ q để có h(v); (3) đổi trọng số w'(u,v)=w+h(u)−h(v) ≥ 0; (4) chạy Dijkstra từ từng đỉnh; (5) khôi phục d(u,v)=d'(u,v)−h(u)+h(v). Độ phức tạp O(V·E + V²log V + V·E log V) tùy cách cài đặt.</p><button data-go="viz" data-al="john">Chạy Johnson</button>`],
+["So sánh Euler – Hamilton & độ phức tạp","so sánh complexity big-o độ phức tạp",`<table><tr><th></th><th>Euler</th><th>Hamilton</th></tr><tr><td>Quan tâm</td><td>Cạnh</td><td>Đỉnh</td></tr><tr><td>Đường đi</td><td>Mỗi cạnh 1 lần</td><td>Mỗi đỉnh 1 lần</td></tr><tr><td>Chu trình</td><td>Có quay về đầu</td><td>Có quay về đầu</td></tr><tr><td>Thuật toán</td><td>O(E)</td><td>Backtracking, mũ/giai thừa</td></tr></table><br><table><tr><th>Thuật toán</th><th>Độ phức tạp</th></tr><tr><td>BFS / DFS</td><td>O(V+E)</td></tr><tr><td>Euler – Hierholzer</td><td>O(E)</td></tr><tr><td>Hamilton – Backtracking</td><td>O(V!)</td></tr><tr><td>Dijkstra – mảng</td><td>O(V²)</td></tr><tr><td>Dijkstra – hàng đợi ưu tiên</td><td>O((V+E) log V)</td></tr><tr><td>Bellman-Ford</td><td>O(V·E)</td></tr><tr><td>Johnson (mọi cặp)</td><td>O(V·E + V·(V+E) log V)</td></tr></table><p class="m">Big-O cho biết thời gian tăng nhanh cỡ nào khi đồ thị lớn lên: O(V!) nghĩa là thêm 1 đỉnh làm thời gian nhân lên rất nhiều lần.</p>`]];
+$("tc").innerHTML=T.map((t,i)=>`<div class="card" id="t${i}"><h2>${t[0]}</h2>${t[2]}</div>`).join("");
+$("homeCards").innerHTML=[["Graph Concepts",0],["Graph Types",1],["Connectivity",4],["Euler",5],["Hamilton",6],["Dijkstra",7],["Bellman-Ford",8],["Johnson",9]].map(([n,i])=>`<div class="card"><h3>${n}</h3><button data-p="theory" data-t="${i}">Xem bài</button></div>`).join("");
+$("heroG").innerHTML=mini({A:[40,30],B:[150,25],C:[70,100],D:[190,95],E:[110,60]},[["A","B"],["A","C"],["B","E"],["C","D"],["E","D"],["A","E"]]);
+// hover minh họa: tô sáng đỉnh + cạnh liên thuộc
+document.addEventListener("mouseover",e=>{const g=e.target.closest(".hv g");if(!g)return;const s=g.closest("svg"),v=g.dataset.v,inc=[...s.querySelectorAll(".me")].filter(p=>p.dataset.u===v||p.dataset.w===v);
+ s.querySelectorAll(".hl").forEach(x=>x.classList.remove("hl"));g.classList.add("hl");inc.forEach(p=>p.classList.add("hl"));
+ g.closest(".row").querySelector(".info").innerHTML=`<b>deg(${v}) = ${inc.length}</b><br>Cạnh liên thuộc: ${inc.map(p=>p.dataset.u+"-"+p.dataset.w).join(", ")}<br>Đỉnh kề: ${inc.map(p=>p.dataset.u===v?p.dataset.w:p.dataset.u).join(", ")}`});
+// ===== ĐIỀU HƯỚNG + TÌM KIẾM =====
+function go(p,t){document.querySelectorAll(".page").forEach(x=>x.classList.toggle("on",x.id===p));document.querySelectorAll("nav [data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===p));window.scrollTo(0,0);if(t!==undefined)$("t"+t).scrollIntoView()}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-p]");if(b)go(b.dataset.p,b.dataset.t);const g=e.target.closest("[data-go]");if(g){go("viz");if(g.dataset.al)pickAlgo(g.dataset.al)}});
+$("q").onkeydown=e=>{if(e.key!=="Enter")return;const k=e.target.value.toLowerCase().trim(),i=T.findIndex(t=>(t[0]+" "+t[1]).toLowerCase().includes(k));if(i>=0)go("theory",i);else if(/visual|playground|graph/.test(k))go("viz")};
+// ===== QUIZ =====
+const Q=[["Chu trình Euler quan tâm đến?",["Đỉnh","Cạnh","Trọng số","Ma trận"],1,"Euler đi qua mỗi CẠNH đúng một lần."],["Định lý bắt tay: Σdeg(v) = ?",["|E|","2|E|","|V|","2|V|"],1,"Mỗi cạnh đóng góp 2 vào tổng bậc."],["Đồ thị vô hướng có chu trình Euler khi?",["Liên thông, mọi đỉnh bậc chẵn","Có đúng 2 đỉnh bậc lẻ","Mọi đỉnh bậc lẻ","Là đồ thị đầy đủ"],0,"Đó là điều kiện cần và đủ."],["Dijkstra KHÔNG dùng được khi?",["Đồ thị có hướng","Có cạnh trọng số âm","Đồ thị vô hướng","Có chu trình"],1,"Dijkstra yêu cầu trọng số không âm."],["Số cạnh của K₆ là?",["12","15","30","36"],1,"6×5/2 = 15."],["Độ phức tạp Hamilton bằng quay lui (xấu nhất)?",["O(E)","O(V²)","O(V!)","O(V+E)"],2,"Phải thử các hoán vị đỉnh."],["Thuật toán nào xử lý được cạnh âm và phát hiện chu trình âm?",["Dijkstra","Bellman-Ford","BFS","Hierholzer"],1,"Bellman-Ford lặp V−1 lần rồi kiểm tra thêm một lượt."],["Johnson dùng Bellman-Ford để làm gì?",["Tìm chu trình Euler","Tính h(v) để đổi trọng số thành không âm","Đếm thành phần liên thông","Sắp xếp đỉnh"],1,"w'(u,v)=w+h(u)−h(v) ≥ 0 rồi chạy Dijkstra từng đỉnh."]];
+let sc=0,ans=0;$("qs").innerHTML=Q.map((q,i)=>`<div class="card"><b>Câu ${i+1}. ${q[0]}</b>${q[1].map((o,j)=>`<button class="opt" data-q="${i}" data-o="${j}">${"ABCD"[j]}. ${o}</button>`).join("")}<div class="m"></div></div>`).join("");
+$("score").textContent=`Score: 0/${Q.length}`;
+$("qs").onclick=e=>{const b=e.target.closest("[data-q]");if(!b||b.parentElement.dataset.done)return;const q=Q[b.dataset.q],ok=+b.dataset.o===q[2];b.parentElement.dataset.done=1;ans++;if(ok)sc++;
+ b.classList.add(ok?"ok":"bad");b.parentElement.children[q[2]+1].classList.add("ok");b.parentElement.lastChild.textContent=(ok?"✓ Đúng. ":"✗ Sai. ")+q[3];$("score").textContent=`Score: ${sc}/${Q.length}`};
+// ===== KHỞI TẠO =====
+const x0=EX[6];mk(x0[1],x0[2],false,true,false);fillSel();$("s").value="A";$("t").value="D";pickAlgo("dij");draw();refresh();
+</script></body></html>
